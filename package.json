@@ -2,7 +2,10 @@
   "name": "FileSync",
   "version": "4.0.0",
   "description": "Enables out of instance record updates for ServiceNow.",
-  "main": "src/app.js",
+  "main": "bin/app.js",
+  "bin" : {
+    "filesync": "./bin/app.js"
+  },
   "dependencies": {
     "assert-plus": "^0.1.5",
     "chokidar": "1.0.0-rc4",
