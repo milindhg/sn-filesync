@@ -18,15 +18,15 @@ var moment = require('moment');
 
 // ---------------------------------------------------
 // custom imports
-var configLoader = require('../src/config'),
+var configLoader = require('../lib/config'),
     config = {},
-    upgradeNeeded = require('../src/upgrade'),
-    sncClient = require('../src/snc-client'),
-    notify = require('../src/notify'),
-    SearchUtil = require('../src/search'),
+    upgradeNeeded = require('../lib/upgrade'),
+    sncClient = require('../lib/snc-client'),
+    notify = require('../lib/notify'),
+    SearchUtil = require('../lib/search'),
     Search = SearchUtil.Search,
-    runTests = require('../src/tests'),
-    FileRecordUtil = require('../src/file-record'),
+    runTests = require('../lib/tests'),
+    FileRecordUtil = require('../lib/file-record'),
     FileRecord = FileRecordUtil.FileRecord,
     makeHash = FileRecordUtil.makeHash;
 
