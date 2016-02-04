@@ -20,7 +20,7 @@
     "winston": "^1.0.0"
   },
   "engines": {
-    "node": ">=5.0"
+    "node": ">=4.2.6 || >=5.0"
   },
   "devDependencies": {},
   "scripts": {
