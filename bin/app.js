@@ -52,7 +52,8 @@ var testsRunning = false;
 
 var chokiWatcher = false,
     chokiWatcherReady = false,
-    chokiWatcherIgnore = ["**/.*"]; // ignore hidden files/dirs
+    // ignore hidden files/dirs like .sync_data when watching for changes
+    chokiWatcherIgnore = /[\/\\]\./; // NOTE: anymatch (micromatch for globs) no longer works with ["**/.*"]
 
 var filesInQueueToDownload = 0,
     filesToPreLoad = {};
@@ -1037,7 +1038,9 @@ function watchFolders() {
     chokiWatcher = chokidar.watch(watchedFolders, {
             persistent: true,
             // ignores use anymatch (https://github.com/es128/anymatch)
-            ignored: chokiWatcherIgnore
+            ignored: chokiWatcherIgnore,
+            // performance hit?
+            alwaysStat: true
         })
         .on('add', function (file, stats) {
 
