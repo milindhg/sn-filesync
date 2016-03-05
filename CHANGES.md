@@ -1,6 +1,14 @@
 # FileSync Changes
 
 
+* 2016-03-05 (**Version 4.0.0** :mushroom:)
+ * Refactor to match up with NPM and node project standards and remove binaries
+   * `npm install` now required to populate the `node_modules/` dependencies
+   * Special thanks @karimhernandez + @Echo3ToEcho7 for support and pull requests
+   * **UPGRADE NOTICE**: ensure npm >= v3.6.0 and node >= v5.6.0 before installing modules and running via `node bin/app.js`
+ * Readme updates
+
+
 * 2016-01-10 (**Version 3.0.5**)
  * Search now replaces characters that would be invalid for file names so that such records can be saved (fixes #18)
  * Fix search issue where duplicate record names for a table where not being saved. Can now save the sys_id in the file name via new config option: `ensureUniqueNames` (fixes #17)
