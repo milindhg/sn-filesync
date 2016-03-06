@@ -1,6 +1,7 @@
-FileSync (v4.0.0)
+sn-filesync -- ServiceNow FileSync (v4.0.0)
 =================
 
+[![NPM](https://nodei.co/npm/sn-filesync.png)](https://nodei.co/npm/sn-filesync/)
 
 [![Intro to FileSync](https://github.com/dynamicdan/filesync/blob/master/thumbnail.png)](https://www.youtube.com/watch?v=OlVllfPVOrA "Intro to FileSync")
 
