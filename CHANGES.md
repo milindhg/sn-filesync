@@ -1,6 +1,10 @@
 # FileSync Changes
 
 
+* 2016-03-17 (**Version 4.0.1**)
+ * Replace restify with restler (which handles connection stuff) so that a compiler is no longer needed (fixes #22)
+
+
 * 2016-03-05 (**Version 4.0.0** :mushroom:)
  * Refactor to match up with NPM and node project standards and remove binaries
    * `npm install` now required to populate the `node_modules/` dependencies

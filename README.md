@@ -1,4 +1,4 @@
-sn-filesync -- ServiceNow FileSync (v4.0.0)
+sn-filesync -- ServiceNow FileSync (v4.0.1)
 =================
 
 [![NPM](https://nodei.co/npm/sn-filesync.png)](https://nodei.co/npm/sn-filesync/)
@@ -374,15 +374,14 @@ Considering ServiceNow does not handle merge conflicts at all, this is a major g
 - [x] check if the record has been updated on the server before uploading changes and warn the user and cancel the upload (basic conflict management)
 - [x] add notification (mac OS) to signify that the upload is complete (or failed)
 - [x] ignore hidden files better (Eg. ".DS_Store", ".jshintrc")
-- [ ] when an update conflict has been detected write out the remote file and launch a diff app (command line "diff" or mac OS XCode "FileMerge" via "`opendiff <left> <right>`") for the user to help resolve the differences
-- [ ] allow upload override of server record if the user has made a merge of remote and local data
-
 - [x] upgrade node binaries to latest versions (currently version "v0.8.25". version here http://nodejs.org/dist/v0.10.37/ needs testing with restify)
 - [x] upgrade 3rd party node_modules (except restify)
-- [ ] upgrade restify or find alternative that works better (restify is at "2.6.0" but should be "3.0.1" which needs "node": ">=0.10" run `npm outdated` for details)
+- [x] upgrade restify or find alternative that works better (restler)
 - [x] use standard npm package.json setup to specify 3rd part node_modules
-
-
+- [ ] allow records to be saved in sub-dirs (eg, grouped by table or date created or user created etc.)
+- [ ] when an update conflict has been detected write out the remote file and launch a diff app (command line "diff" or mac OS XCode "FileMerge" via "`opendiff <left> <right>`") for the user to help resolve the differences
+- [ ] allow upload override of server record if the user has made a merge of remote and local data
+- [ ] allow saving complete record as XML (via search tool)
 
 Nice to haves
 - [x] auto create folder structure for user (```./node-darwin src/app --setup```)
@@ -390,12 +389,12 @@ Nice to haves
 - [x] option to re-download all files from instance (```./node-darwin src/app --resync```)
 - [x] auto download records created or updated by a given user ID (via ```--search``` option)
 - [x] notifications are clickable and load the record in the browser
-- [ ] offline support? (keep track of files that are queued to upload when the connection is available again and retry).. maybe not. This could be dangerous if records get updated without someone to test them. Potentially workable if the last queued file is less than 3 minutes ago to cater for flaky mobile/roaming connections.
 - [x] save meta data received in request for user info (eg, sys_updated_on, sys_updated_by, sys_mod_count, description) (currently viewable in the `.sync_data/` files)
-- [ ] config option to log details to log file (help others send log info)
 - [x] download records on startup provided by a list (See ```"preLoad"``` in app.config.json)
 - [x] add windows support for fancy/OS style notifications
-- [ ] allow saving complete record as XML (via search tool)
+- [ ] config option to log details to log file (help others send log info)
+- [ ] offline support? (keep track of files that are queued to upload when the connection is available again and retry).. maybe not. This could be dangerous if records get updated without someone to test them. Potentially workable if the last queued file is less than 3 minutes ago to cater for flaky mobile/roaming connections.
+
 
 
 ## Contribution workflow
