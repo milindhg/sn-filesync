@@ -1,4 +1,4 @@
-sn-filesync -- ServiceNow FileSync (v4.0.1)
+sn-filesync -- ServiceNow FileSync (v4.0.2)
 =================
 
 [![NPM](https://nodei.co/npm/sn-filesync.png)](https://nodei.co/npm/sn-filesync/)
@@ -230,8 +230,6 @@ Property | Values | Default | Purpose
 ------------ | -------------------- | ------------- | -------------
 preLoadList | Object listing folders and files | n/a |  Defines a list of files to automatically download per folder. Saves on manual file creation efforts <br />Eg: <br />``` preLoadList: { ```<br />  ```  "business_rules": ["my special rule.js", "Another rule.js"]```<br />```}```
 protocol | "http" | https | If https is not supported then force http usage
-acceptBadSSL | Bool: true / false | false | If the SSL is not fully valid or is sefl-signed or the signing authority is not valid then set this to true. This should only be set to true in development environments. Setting debug to true will help test connection issues and will help validate if this is an issue or not.
-
 
 ### Exporting current setup
 
