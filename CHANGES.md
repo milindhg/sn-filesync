@@ -2,7 +2,9 @@
 
 
 * 2016-03-18 (**Version 4.0.2**)
- * Drop need for `acceptBadSSL` flag
+ * Drop support for `acceptBadSSL` flag (no longer needed)
+ * Fix old module being included
+ * Fix jshint issues
 
 * 2016-03-17 (**Version 4.0.1**)
  * Replace restify with restler (which handles connection stuff) so that a compiler is no longer needed (fixes #22)
