@@ -5,14 +5,16 @@
             "key": "name",
             "fields": {
                 "js": "script"
-            }
+            },
+            "subDirPattern": "collection/active_<active>/when"
         },
         "client_scripts": {
             "table": "sys_script_client",
             "key": "name",
             "fields": {
                 "js": "script"
-            }
+            },
+            "subDirPattern": "table/active_<active>/type"
         },
         "processors": {
             "table": "sys_processor",
@@ -26,14 +28,16 @@
             "key": "name",
             "fields": {
                 "js": "script"
-            }
+            },
+            "subDirPattern": "event_name"
         },
         "script_includes": {
             "table": "sys_script_include",
             "key": "name",
             "fields": {
                 "js": "script"
-            }
+            },
+            "subDirPattern": "client_<client_callable>"
         },
         "style_sheets": {
             "table": "content_css",
@@ -47,14 +51,16 @@
             "key": "name",
             "fields": {
                 "js": "script"
-            }
+            },
+            "subDirPattern": "table/active_<active>/client_<client>"
         },
         "ui_macros": {
             "table": "sys_ui_macro",
             "key": "name",
             "fields": {
                 "xhtml": "xml"
-            }
+            },
+            "subDirPattern": "category"
         },
         "ui_pages": {
             "table": "sys_ui_page",
@@ -63,7 +69,8 @@
                 "xhtml": "html",
                 "client.js": "client_script",
                 "server.js": "processing_script"
-            }
+            },
+            "subDirPattern": "category"
         },
         "ui_scripts": {
             "table": "sys_ui_script",
@@ -77,14 +84,16 @@
             "key": "name",
             "fields": {
                 "xhtml": "programmatic_content"
-            }
+            },
+            "subDirPattern": "category"
         },
         "email_templates": {
             "table": "sysevent_email_template",
             "key": "name",
             "fields": {
                 "html": "message_html"
-            }
+            },
+            "subDirPattern": "collection"
         },
         "fix_scripts": {
             "table": "sys_script_fix",
@@ -98,7 +107,8 @@
             "key": "name",
             "fields": {
                 "js": "script"
-            }
+            },
+            "subDirPattern": "active_<active>/applies_to_<applies_to>/type"
         },
         "sys_web_service": {
             "table": "sys_web_service",

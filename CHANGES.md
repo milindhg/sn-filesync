@@ -1,6 +1,11 @@
 # FileSync Changes
 
 
+* 2016-03-21 (**Version 4.1.0**)
+ * Add support for saving record attributes in the folder path using the new `subDirPattern` folder attribute
+   * Also allows creating arbitrary folder heirarchies however you like! eg `business_rules/most used/SomeClass.js`
+
+
 * 2016-03-18 (**Version 4.0.2**)
  * Drop support for `acceptBadSSL` flag (no longer needed)
  * Fix old module being included

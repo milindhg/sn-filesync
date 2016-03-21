@@ -42,7 +42,8 @@ var notifyUserMsg = notifyObj.msg,
 
 var DOWNLOAD_OK = 1,
     DOWNLOAD_FAIL = -1,
-    multiDownloadStatus = DOWNLOAD_OK;
+    multiDownloadStatus = DOWNLOAD_OK,
+    SLASH = '/';
 
 
 var isMac = /^darwin/.test(process.platform);
@@ -247,54 +248,59 @@ function processFoundRecords(searchObj, queryObj, records) {
     var firstRoot = getFirstRoot(),
         basePath = config.roots[firstRoot].root,
         totalFilesToSave = 0,
-        totalErrors = 0;
+        totalErrors = 0,
+        totalSaves = 0,
+        failedFiles = [];
 
-    processRecords();
+    // process found records
+    for (var i in records) {
+        var record = records[i],
+            validData,
+            fileSystemSafeName = normaliseRecordName(record.recordName),
+            fileName = fileSystemSafeName + '.' + record.fieldSuffix,
+            filePath = basePath + SLASH + record.folder + SLASH;
 
-    function processRecords() {
-        for (var i in records) {
-            var record = records[i];
-
-            var fileSystemSafeName = normaliseRecordName(record.recordName);
-            // TODO : support saving in subdirs via config.folders[record.folder].subDirPattern
-            var fileName = record.folder + '/' + fileSystemSafeName + '.' + record.fieldSuffix;
-            var filePath = basePath + '/' + fileName;
+        if (record.subDir !== '') {
+            filePath += record.subDir + SLASH;
+        }
+        filePath += fileName;
 
 
-            // allow records with the same name to be saved properly
-            if (config.ensureUniqueNames) {
-                filePath = updateFileName('_' + record.sys_id, filePath);
-            }
+        // allow records with the same name to be saved properly
+        if (config.ensureUniqueNames) {
+            filePath = updateFileName('_' + record.sys_id, filePath);
+        }
 
-            // seems like protected records that are read-only hide certain fields from view
-            if (typeof records[i].recordData == 'undefined') {
-                logit.warn('Found but will ignore to protected record: ' + filePath);
-                totalErrors++;
-                continue;
-            }
+        // seems like protected records that are read-only hide certain fields from view
+        if (typeof records[i].recordData == 'undefined') {
+            logit.warn('Found but will ignore to protected record: ' + filePath);
+            totalErrors++;
+            failedFiles.push(filePath);
+            continue;
+        }
 
-            var validData = record.recordData.length > 0;
+        validData = record.recordData.length > 0;
+        if (validData) {
+            logit.info('File to create: ' + filePath);
+        } else {
+            logit.info('Found but will ignore due to no content: ' + filePath);
+            totalErrors++;
+            failedFiles.push(filePath);
+        }
+
+        if (queryObj.download) {
+            // don't save files of 0 bytes as this will confuse everyone
             if (validData) {
-                logit.info('File to create: ' + filePath);
-            } else {
-                logit.info('Found but will ignore due to no content: ' + filePath);
-                totalErrors++;
-            }
-
-            if (queryObj.download) {
-                // don't save files of 0 bytes as this will confuse everyone
-                if (validData) {
-                    totalFilesToSave++;
-                    saveFoundFile(filePath, record);
-                }
+                totalFilesToSave++;
+                saveFoundFile(filePath, record);
             }
         }
-        if (!queryObj.download) {
-            if (totalErrors > 0) {
-                logit.warn('Finished searching for files. %s file(s) will not be saved (see output above).', totalErrors);
-            }
-            process.exit(1);
+    }
+    if (!queryObj.download) {
+        if (totalErrors > 0) {
+            logit.warn("Finished searching for files. %s file(s) will not be saved: \n%s", totalErrors, failedFiles.join("\n"));
         }
+        process.exit(1);
     }
 
 
@@ -307,6 +313,7 @@ function processFoundRecords(searchObj, queryObj, records) {
             logit.error('File (path) is not valid %s', file);
             totalFilesToSave--;
             totalErrors++;
+            failedFiles.push(file);
             return;
         }
 
@@ -317,6 +324,7 @@ function processFoundRecords(searchObj, queryObj, records) {
                 logit.error('Failed to write out sync data file for %s', file);
                 totalFilesToSave--;
                 totalErrors++;
+                failedFiles.push(file);
             } else {
                 // no issues writing sync file so write out record to file
 
@@ -325,8 +333,10 @@ function processFoundRecords(searchObj, queryObj, records) {
                     if (err) {
                         logit.error('Failed to write out file %s', file);
                         totalErrors++;
+                        failedFiles.push(file);
                     } else {
                         logit.info('Saved file %s', file);
+                        totalSaves++;
                     }
 
                     // done writing out files.
@@ -340,10 +350,10 @@ function processFoundRecords(searchObj, queryObj, records) {
 
     function doneSaving() {
         if (totalErrors > 0) {
-            logit.warn('Finished creating files with errors. %s file(s) failed to save or had 0 bytes as content (see output above).',
-                totalErrors);
+            logit.warn("Finished creating %d files with errors. %s file(s) failed to save or had 0 bytes as content: \n%s",
+                totalSaves, totalErrors, failedFiles.join("\n"));
         } else {
-            logit.info('Finished creating files.');
+            logit.info('Finished creating %d files.', totalSaves);
         }
         process.exit(1);
     }
