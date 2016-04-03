@@ -1,4 +1,4 @@
-sn-filesync -- ServiceNow FileSync (v4.0.2)
+sn-filesync -- ServiceNow FileSync (v4.1.0)
 =================
 
 [![NPM](https://nodei.co/npm/sn-filesync.png)](https://nodei.co/npm/sn-filesync/)
@@ -15,6 +15,7 @@ sn-filesync -- ServiceNow FileSync (v4.0.2)
    * [app.config.json settings](#appconfigjson-settings)
  * [Advanced settings](#advanced-settings)
    * [Folder definitions (optional)](#folder-definitions-optional)
+     * [Sub Directory Pattern usage](#sub-directory-pattern-usage)
    * [Config options](#config-options)
      * [Root specific options](#root-specific-options)
    * [Exporting current setup](#exporting-current-setup)
@@ -173,50 +174,94 @@ Example app.config.json (see also the included app.config.json file):
 
 Folder definitions map fields and records from the instance to a local directory structure. Creating an empty file in a specific mapped directory will then cause a download of that record field based on the file name and suffix used.
 
-A default list of folder definitions exists in `bin/records.config.json` for easier setup. This list can be extended or overridden. If you want to start from scratch then set `ignoreDefaultFolders` to `true`. For most users, the default list covers all needs. The list can be updated at any time but ensure you restart the FileSync tool after making changes to get the new mapping.
+A default list of folder definitions exists in `lib/records.config.json` for easier setup. This list can be extended or overridden. If you want to start from scratch then set `ignoreDefaultFolders` to `true`. For most users, the default list covers all needs. The list can be updated at any time but ensure you restart the FileSync tool after making changes to get the new mapping.
 
-See the **bin/records.config.json** file for sample definitions.
+See the **lib/records.config.json** file for sample definitions.
 
 ```javascript
-        "roots" { .... },
 
-        // maps a sub folder of a root folder to a table on the configured instance
-        "folders": {
-            "script_includes": {                    // folder with files to sync
-                "table": "sys_script_include",      // table with records to sync to
-                "key": "name",                      // field to match with filename to ID unique record
-                "fields": {                         // file contents are synced to a field based on filename suffix
-                    "js": "script"                  //   files ending in .js will sync to script field
-                }
-            },
-            "business_rules": {
-                "table": "sys_script",
-                "key": "name",
-                "fields": {
-                    "js": "script"
-                }
-            },
-            "ui_pages": {
-                "table": "sys_ui_page",
-                "key": "name",
-                "fields": {                          // multiple fields for the same record can be mapped to multiple
-                    "xhtml": "html",                 //   files by using different filename suffixes
-                    "client.js": "client_script",    //   for ui pages, you might have three separate files:
-                    "server.js": "processing_script" //    mypage.xhtml, mypage.client.js, mypage.server.js
-                }                                    //   to store the all script associated with the page
+    "roots" { .... },
+
+    // maps a sub folder (of a root folder) to a table on the configured instance
+    "folders": {
+        "script_includes": {                    // folder with files to sync
+            "table": "sys_script_include",      // table with records to sync to
+            "key": "name",                      // field to match with filename to ID unique record
+            "fields": {                         // file contents are synced to a field based on filename suffix
+                "js": "script"                  //   files ending in .js will sync to script field
             }
-            ...
         },
+        "business_rules": {
+            "table": "sys_script",
+            "key": "name",
+            "fields": {
+                "js": "script"
+            },
+            "subDirPattern": "collection/active_<active>/when" // results in "business_rules/incident/active_true/before/mark_closed.js
+                                                               //   see below for pattern usage.
+        },
+        "ui_pages": {
+            "table": "sys_ui_page",
+            "key": "name",
+            "fields": {                          // multiple fields for the same record can be mapped to multiple
+                "xhtml": "html",                 //   files by using different filename suffixes
+                "client.js": "client_script",    //   for ui pages, you might have three separate files:
+                "server.js": "processing_script" //    mypage.xhtml, mypage.client.js, mypage.server.js
+            }                                    //   to store the all script associated with the page
+        }
+        ...
+    },
 ```
+
+#### Sub Directory Pattern usage
+
+It is possible not only to group records by table but also by other attributes on the record. The `subDirPattern` property allows specifying additional sub directories that should be used to group your record fields. It's possible to use both field values and strings as desired. If the attribute provided is not an attribute on the record then it will be ignored.
+
+Using Sub directory patterns brings more context to the saved fields and helps avoid doing things like working on records that are in-active. The default folder config includes some patterns as defaults which can be overridden.
+
+Samples:
+
+````
+
+    "client_scripts": {
+        "table": "sys_script_client",
+        "key": "name",
+        "fields": {
+            "js": "script"
+        },
+        "subDirPattern": "table", // results in client_scripts/incident/Highlight VIP Caller.js
+    },
+
+````
+
+Mixed Attributes:
+
+````
+
+    "subDirPattern": "active_<active>/type", // results in client_scripts/active_true/onChange/Highlight VIP Caller.js
+````
+
+````
+
+    "subDirPattern": "active/table/from_<sys_created_by>", // results in client_scripts/true/incident/from_glide.maint/Highlight VIP Caller.js
+````
+
+NOT supported:
+
+````
+
+    "subDirPattern": "table_<table>_<type>" // multiple attributes per sub directory name
+````
+
 
 ### Config options
 
 Property | Values | Default | Purpose
 ------------ | -------------------- | ------------- | -------------
 debug | Bool: true / false | false | Enable more verbose debugging. Useful to troubleshoot connection issues.
-ignoreDefaultFolders | Bool: true / false | false | If false then utilise record to folder mapping defined in **bin/records.config.json**.<br />If true then the **"folders"** property must be set as described below.
-folders | Object listing folders | not set (inherited) | See **bin/records.config.json** as an example for format and usage. If this property is defined then it will override that defined in **bin/records.config.json** on a per folder level. This is an easy way to specify more mappings without modifying core files. If "ignoreDefaultFolders " is set to true then **bin/records.config.json** is completely ignored and all mappings must be defined in the "folders" property.
-createAllFolders | Bool: true / false | false | Creates all folders specified by folders (if set) or the default **bin/records.config.json** file.
+ignoreDefaultFolders | Bool: true / false | false | If false then utilise record to folder mapping defined in **lib/records.config.json**.<br />If true then the **"folders"** property must be set as described below.
+folders | Object listing folders | not set (inherited) | See **lib/records.config.json** as an example for format and usage. If this property is defined then it will override that defined in **lib/records.config.json** on a per folder level. This is an easy way to specify more mappings without modifying core files. If "ignoreDefaultFolders " is set to true then **lib/records.config.json** is completely ignored and all mappings must be defined in the "folders" property.
+createAllFolders | Bool: true / false | false | Creates all folders specified by folders (if set) or the default **lib/records.config.json** file.
 preLoad | Bool: true / false | false | Creates local files that can be specified per root setting "`preLoadList`" (defined below). Set to false to ignore the property. Note that files that already exist are ignored but there is however a slight performance cost if you leave this option set to true. <br />**TIP**: set to false once files have been created.
 ignoreList | Array of matches | `/[\/\\]\./` | Define what files are **not** tracked for changes. Defaults to ignore hidden files on any directory level (eg `.sync_data`). Usage details can be found on the [chokidar readme](https://github.com/paulmillr/chokidar#path-filtering).
 ensureUniqueNames | Bool: true / false | false | If set to true then files will be post-fixed with the record sys_id to ensure all saved files have unique names. This supports records that have the same name on the same table. By default this is false to encourage more useful record names on the instance.
@@ -376,10 +421,11 @@ Considering ServiceNow does not handle merge conflicts at all, this is a major g
 - [x] upgrade 3rd party node_modules (except restify)
 - [x] upgrade restify or find alternative that works better (restler)
 - [x] use standard npm package.json setup to specify 3rd part node_modules
-- [ ] allow records to be saved in sub-dirs (eg, grouped by table or date created or user created etc.)
+- [x] allow records to be saved in sub-dirs (eg, grouped by table or date created or user created etc.)
+- [ ] allow saving complete record as XML (via search tool)
 - [ ] when an update conflict has been detected write out the remote file and launch a diff app (command line "diff" or mac OS XCode "FileMerge" via "`opendiff <left> <right>`") for the user to help resolve the differences
 - [ ] allow upload override of server record if the user has made a merge of remote and local data
-- [ ] allow saving complete record as XML (via search tool)
+
 
 Nice to haves
 - [x] auto create folder structure for user (```./node-darwin src/app --setup```)
