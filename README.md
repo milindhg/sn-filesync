@@ -1,4 +1,4 @@
-sn-filesync -- ServiceNow FileSync (v4.1.0)
+sn-filesync -- ServiceNow FileSync (v4.1.1)
 =================
 
 [![NPM](https://nodei.co/npm/sn-filesync.png)](https://nodei.co/npm/sn-filesync/)

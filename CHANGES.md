@@ -1,5 +1,7 @@
 # FileSync Changes
 
+* 2016-04-03 (**Version 4.1.1**)
+ * Fix search issue: Records with multiple mapped scripts/css/xml fields do not download to multiple files when using search (fixes #25)
 
 * 2016-03-21 (**Version 4.1.0**)
  * Add support for saving record attributes in the folder path using the new `subDirPattern` folder attribute

@@ -1,6 +1,6 @@
 {
   "name": "sn-filesync",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Enables out of instance record updates for ServiceNow.",
   "main": "bin/app.js",
   "bin": {
