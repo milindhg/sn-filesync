@@ -149,6 +149,7 @@ function init() {
                 table: argv.search_table || '',
                 download: argv.download || false,
                 rows: argv.records_per_search || false,
+                fullRecord: argv.full_record || false
             };
 
             // support search via config file
@@ -158,6 +159,7 @@ function init() {
                 queryObj.table = searchObj.table || queryObj.table;
                 queryObj.download = searchObj.download || queryObj.download;
                 queryObj.rows = searchObj.records_per_search || queryObj.rows;
+                queryObj.fullRecord = searchObj.fullRecord || queryObj.fullRecord;
             } else {
                 logit.info('Note: running in demo mode as no defined search in your config file was found/specified.'.yellow);
                 queryObj.demo = true;
@@ -250,15 +252,22 @@ function processFoundRecords(searchObj, queryObj, records) {
         totalFilesToSave = 0,
         totalErrors = 0,
         totalSaves = 0,
-        failedFiles = [];
+        failedFiles = [],
+        fullRecordSuffix = '_record.json';
 
     // process found records
     for (var i in records) {
         var record = records[i],
             validData,
             fileSystemSafeName = normaliseRecordName(record.recordName),
-            fileName = fileSystemSafeName + '.' + record.fieldSuffix,
             filePath = basePath + SLASH + record.folder + SLASH;
+
+        var fileName = fileSystemSafeName + '.' + record.fieldSuffix;
+
+        if (record.fullRecord) {
+            fileName = fileSystemSafeName + fullRecordSuffix;
+        }
+
 
         if (record.subDir !== '') {
             filePath += record.subDir + SLASH;
@@ -304,48 +313,60 @@ function processFoundRecords(searchObj, queryObj, records) {
     }
 
 
+    function outputFile(file, data) {
+        fs.outputFile(file, data, function (err) {
+
+            totalFilesToSave--;
+            if (err) {
+                logit.error('Failed to write out file %s', file);
+                totalErrors++;
+                failedFiles.push(file);
+            } else {
+                logit.info('Saved file %s', file);
+                totalSaves++;
+            }
+
+            // done writing out files.
+            if (totalFilesToSave <= 0) {
+                doneSaving();
+            }
+        });
+
+    }
+
     // save both the sync hash file and record as file.
     function saveFoundFile(file, record) {
 
         var data = record.recordData;
 
-        if (!trackFile(file)) {
-            logit.error('File (path) is not valid %s', file);
-            totalFilesToSave--;
-            totalErrors++;
-            failedFiles.push(file);
-            return;
-        }
+        if (record.fullRecord) {
+            data = JSON.stringify(record.fullRecord, null, 4);
+            outputFile(file, data);
 
-        updateFileMeta(file, record);
+        } else {
 
-        fileRecords[file].saveHash(data, function (saved) {
-            if (!saved) {
-                logit.error('Failed to write out sync data file for %s', file);
+            if (!trackFile(file)) {
+                logit.error('File (path) is not valid %s', file);
                 totalFilesToSave--;
                 totalErrors++;
                 failedFiles.push(file);
-            } else {
-                // no issues writing sync file so write out record to file
-
-                fs.outputFile(file, data, function (err) {
-                    totalFilesToSave--;
-                    if (err) {
-                        logit.error('Failed to write out file %s', file);
-                        totalErrors++;
-                        failedFiles.push(file);
-                    } else {
-                        logit.info('Saved file %s', file);
-                        totalSaves++;
-                    }
-
-                    // done writing out files.
-                    if (totalFilesToSave <= 0) {
-                        doneSaving();
-                    }
-                });
+                return;
             }
-        });
+
+            updateFileMeta(file, record);
+
+            fileRecords[file].saveHash(data, function (saved) {
+                if (!saved) {
+                    logit.error('Failed to write out sync data file for %s', file);
+                    totalFilesToSave--;
+                    totalErrors++;
+                    failedFiles.push(file);
+                } else {
+                    // no issues writing sync file so write out record to file
+                    outputFile(file, data);
+                }
+            });
+        }
     }
 
     function doneSaving() {
