@@ -6,7 +6,7 @@
             "fields": {
                 "js": "script"
             },
-            "subDirPattern": "collection/active_<active>/when"
+            "subDirPattern": "collection/when"
         },
         "client_scripts": {
             "table": "sys_script_client",
@@ -14,7 +14,7 @@
             "fields": {
                 "js": "script"
             },
-            "subDirPattern": "table/active_<active>/type"
+            "subDirPattern": "table/type"
         },
         "processors": {
             "table": "sys_processor",
@@ -52,7 +52,7 @@
             "fields": {
                 "js": "script"
             },
-            "subDirPattern": "table/active_<active>/client_<client>"
+            "subDirPattern": "table/client_<client>"
         },
         "ui_macros": {
             "table": "sys_ui_macro",
@@ -108,7 +108,7 @@
             "fields": {
                 "js": "script"
             },
-            "subDirPattern": "active_<active>/applies_to_<applies_to>/type"
+            "subDirPattern": "applies_to_<applies_to>/type"
         },
         "sys_web_service": {
             "table": "sys_web_service",
