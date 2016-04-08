@@ -143,38 +143,7 @@ function init() {
 
         // experimental search option (needs testing and cleanup)
         if (argv.search) {
-
-            var queryObj = {
-                query: argv.search_query || '',
-                table: argv.search_table || '',
-                download: argv.download || false,
-                rows: argv.records_per_search || false,
-                fullRecord: argv.full_record || false
-            };
-
-            // support search via config file
-            if (argv.search.length > 0 && config.search[argv.search]) {
-                var searchObj = config.search[argv.search];
-                queryObj.query = searchObj.query || queryObj.query;
-                queryObj.table = searchObj.table || queryObj.table;
-                queryObj.download = searchObj.download || queryObj.download;
-                queryObj.rows = searchObj.records_per_search || queryObj.rows;
-                queryObj.fullRecord = searchObj.fullRecord || queryObj.fullRecord;
-            } else {
-                logit.info('Note: running in demo mode as no defined search in your config file was found/specified.'.yellow);
-                queryObj.demo = true;
-            }
-
-
-            logit.info('Performing search'.green);
-            logit.info(queryObj);
-
-            logit.info("Note: only the first root defined is supported for searching.\n".yellow);
-            var firstRoot = getFirstRoot(),
-                snc = getSncClient(firstRoot); // support first root for now
-
-            var s = new Search(config, snc);
-            s.getResults(queryObj, processFoundRecords);
+            startSearch(argv);
             return;
         }
 
@@ -201,6 +170,7 @@ function init() {
 
     upgradeNeeded(config, start);
 }
+
 
 function getFirstRoot() {
     var roots = config.roots,
@@ -246,6 +216,44 @@ function updateFileName(postFix, path) {
     return updated;
 }
 
+function startSearch(argv) {
+
+    var queryObj = {
+        query: argv.search_query || '',
+        table: argv.search_table || '',
+        download: argv.download || false,
+        rows: argv.records_per_search || false,
+        fullRecord: argv.full_record || false
+    };
+
+    // support search via config file
+    if (argv.search.length > 0 && config.search[argv.search]) {
+        var searchObj = config.search[argv.search];
+        queryObj.query = searchObj.query || queryObj.query;
+        queryObj.table = searchObj.table || queryObj.table;
+        queryObj.download = searchObj.download || queryObj.download;
+        queryObj.rows = searchObj.records_per_search || queryObj.rows;
+        queryObj.fullRecord = searchObj.fullRecord || queryObj.fullRecord;
+    } else {
+        logit.info('Note: running in demo mode as no defined search in your config file was found/specified.'.yellow);
+        queryObj.demo = true;
+    }
+
+
+    logit.info('Performing search'.green);
+    logit.info(queryObj);
+
+    logit.info("Note: only the first root defined is supported for searching.\n".yellow);
+    var firstRoot = getFirstRoot(),
+        snc = getSncClient(firstRoot); // support first root for now
+
+    var s = new Search(config, snc);
+    s.getResults(queryObj, processFoundRecords);
+}
+
+/**
+ * Callback from after the Search.getResults() call is complete
+ */
 function processFoundRecords(searchObj, queryObj, records) {
     var firstRoot = getFirstRoot(),
         basePath = config.roots[firstRoot].root,
@@ -288,7 +296,7 @@ function processFoundRecords(searchObj, queryObj, records) {
             continue;
         }
 
-        validData = record.recordData.length > 0;
+        validData = record.recordData.length > 0 || record.recordData.sys_id;
         if (validData) {
             logit.info('File to create: ' + filePath);
         } else {
@@ -340,7 +348,7 @@ function processFoundRecords(searchObj, queryObj, records) {
         var data = record.recordData;
 
         if (record.fullRecord) {
-            data = JSON.stringify(record.fullRecord, null, 4);
+            data = JSON.stringify(data, null, 4);
             outputFile(file, data);
 
         } else {
