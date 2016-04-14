@@ -268,7 +268,8 @@ function processFoundRecords(searchObj, queryObj, records) {
         var record = records[i],
             validData,
             fileSystemSafeName = normaliseRecordName(record.recordName),
-            filePath = basePath + SLASH + record.folder + SLASH;
+            filePath = basePath + SLASH + record.folder + SLASH,
+            sys_id = record.recordData.sys_id || record.sys_id;
 
         var fileName = fileSystemSafeName + '.' + record.fieldSuffix;
 
@@ -285,7 +286,7 @@ function processFoundRecords(searchObj, queryObj, records) {
 
         // allow records with the same name to be saved properly
         if (config.ensureUniqueNames) {
-            filePath = updateFileName('_' + record.sys_id, filePath);
+            filePath = updateFileName('_' + sys_id, filePath);
         }
 
         // seems like protected records that are read-only hide certain fields from view
