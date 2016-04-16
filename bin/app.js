@@ -223,17 +223,21 @@ function startSearch(argv) {
         table: argv.search_table || '',
         download: argv.download || false,
         rows: argv.records_per_search || false,
-        fullRecord: argv.full_record || false
+        fullRecord: argv.full_record || false,
+        recordOnly: argv.record_only || false
     };
 
     // support search via config file
     if (argv.search.length > 0 && config.search[argv.search]) {
         var searchObj = config.search[argv.search];
+        // what is specified in config file overrides cmd line options
+        // this encourages re-usable config and reduces human error with the cmd line
         queryObj.query = searchObj.query || queryObj.query;
         queryObj.table = searchObj.table || queryObj.table;
         queryObj.download = searchObj.download || queryObj.download;
         queryObj.rows = searchObj.records_per_search || queryObj.rows;
         queryObj.fullRecord = searchObj.fullRecord || queryObj.fullRecord;
+        queryObj.recordOnly = searchObj.record_only || queryObj.recordOnly;
     } else {
         logit.info('Note: running in demo mode as no defined search in your config file was found/specified.'.yellow);
         queryObj.demo = true;
