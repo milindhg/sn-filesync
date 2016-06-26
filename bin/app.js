@@ -478,6 +478,7 @@ function getSncClient(root) {
     if (!host._client) {
         host._logger = logit;
         host.debug = config.debug;
+        host.proxy = config.proxy || null;
         host._client = new sncClient(host);
     }
     return host._client;
