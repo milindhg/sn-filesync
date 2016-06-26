@@ -143,36 +143,7 @@ function init() {
 
         // experimental search option (needs testing and cleanup)
         if (argv.search) {
-
-            var queryObj = {
-                query: argv.search_query || '',
-                table: argv.search_table || '',
-                download: argv.download || false,
-                rows: argv.records_per_search || false,
-            };
-
-            // support search via config file
-            if (argv.search.length > 0 && config.search[argv.search]) {
-                var searchObj = config.search[argv.search];
-                queryObj.query = searchObj.query || queryObj.query;
-                queryObj.table = searchObj.table || queryObj.table;
-                queryObj.download = searchObj.download || queryObj.download;
-                queryObj.rows = searchObj.records_per_search || queryObj.rows;
-            } else {
-                logit.info('Note: running in demo mode as no defined search in your config file was found/specified.'.yellow);
-                queryObj.demo = true;
-            }
-
-
-            logit.info('Performing search'.green);
-            logit.info(queryObj);
-
-            logit.info("Note: only the first root defined is supported for searching.\n".yellow);
-            var firstRoot = getFirstRoot(),
-                snc = getSncClient(firstRoot); // support first root for now
-
-            var s = new Search(config, snc);
-            s.getResults(queryObj, processFoundRecords);
+            startSearch(argv);
             return;
         }
 
@@ -199,6 +170,7 @@ function init() {
 
     upgradeNeeded(config, start);
 }
+
 
 function getFirstRoot() {
     var roots = config.roots,
@@ -244,21 +216,71 @@ function updateFileName(postFix, path) {
     return updated;
 }
 
+function startSearch(argv) {
+
+    var queryObj = {
+        query: argv.search_query || '',
+        table: argv.search_table || '',
+        download: argv.download || false,
+        rows: argv.records_per_search || false,
+        fullRecord: argv.full_record || false,
+        recordOnly: argv.record_only || false
+    };
+
+    // support search via config file
+    if (argv.search.length > 0 && config.search[argv.search]) {
+        var searchObj = config.search[argv.search];
+        // what is specified in config file overrides cmd line options
+        // this encourages re-usable config and reduces human error with the cmd line
+        queryObj.query = searchObj.query || queryObj.query;
+        queryObj.table = searchObj.table || queryObj.table;
+        queryObj.download = searchObj.download || queryObj.download;
+        queryObj.rows = searchObj.records_per_search || queryObj.rows;
+        queryObj.fullRecord = searchObj.fullRecord || queryObj.fullRecord;
+        queryObj.recordOnly = searchObj.record_only || queryObj.recordOnly;
+    } else {
+        logit.info('Note: running in demo mode as no defined search in your config file was found/specified.'.yellow);
+        queryObj.demo = true;
+    }
+
+
+    logit.info('Performing search'.green);
+    logit.info(queryObj);
+
+    logit.info("Note: only the first root defined is supported for searching.\n".yellow);
+    var firstRoot = getFirstRoot(),
+        snc = getSncClient(firstRoot); // support first root for now
+
+    var s = new Search(config, snc);
+    s.getResults(queryObj, processFoundRecords);
+}
+
+/**
+ * Callback from after the Search.getResults() call is complete
+ */
 function processFoundRecords(searchObj, queryObj, records) {
     var firstRoot = getFirstRoot(),
         basePath = config.roots[firstRoot].root,
         totalFilesToSave = 0,
         totalErrors = 0,
         totalSaves = 0,
-        failedFiles = [];
+        failedFiles = [],
+        fullRecordSuffix = '_record.json';
 
     // process found records
     for (var i in records) {
         var record = records[i],
             validData,
             fileSystemSafeName = normaliseRecordName(record.recordName),
-            fileName = fileSystemSafeName + '.' + record.fieldSuffix,
-            filePath = basePath + SLASH + record.folder + SLASH;
+            filePath = basePath + SLASH + record.folder + SLASH,
+            sys_id = record.recordData.sys_id || record.sys_id;
+
+        var fileName = fileSystemSafeName + '.' + record.fieldSuffix;
+
+        if (record.fullRecord) {
+            fileName = fileSystemSafeName + fullRecordSuffix;
+        }
+
 
         if (record.subDir !== '') {
             filePath += record.subDir + SLASH;
@@ -268,7 +290,7 @@ function processFoundRecords(searchObj, queryObj, records) {
 
         // allow records with the same name to be saved properly
         if (config.ensureUniqueNames) {
-            filePath = updateFileName('_' + record.sys_id, filePath);
+            filePath = updateFileName('_' + sys_id, filePath);
         }
 
         // seems like protected records that are read-only hide certain fields from view
@@ -279,7 +301,7 @@ function processFoundRecords(searchObj, queryObj, records) {
             continue;
         }
 
-        validData = record.recordData.length > 0;
+        validData = record.recordData.length > 0 || record.recordData.sys_id;
         if (validData) {
             logit.info('File to create: ' + filePath);
         } else {
@@ -304,48 +326,60 @@ function processFoundRecords(searchObj, queryObj, records) {
     }
 
 
+    function outputFile(file, data) {
+        fs.outputFile(file, data, function (err) {
+
+            totalFilesToSave--;
+            if (err) {
+                logit.error('Failed to write out file %s', file);
+                totalErrors++;
+                failedFiles.push(file);
+            } else {
+                logit.info('Saved file %s', file);
+                totalSaves++;
+            }
+
+            // done writing out files.
+            if (totalFilesToSave <= 0) {
+                doneSaving();
+            }
+        });
+
+    }
+
     // save both the sync hash file and record as file.
     function saveFoundFile(file, record) {
 
         var data = record.recordData;
 
-        if (!trackFile(file)) {
-            logit.error('File (path) is not valid %s', file);
-            totalFilesToSave--;
-            totalErrors++;
-            failedFiles.push(file);
-            return;
-        }
+        if (record.fullRecord) {
+            data = JSON.stringify(data, null, 4);
+            outputFile(file, data);
 
-        updateFileMeta(file, record);
+        } else {
 
-        fileRecords[file].saveHash(data, function (saved) {
-            if (!saved) {
-                logit.error('Failed to write out sync data file for %s', file);
+            if (!trackFile(file)) {
+                logit.error('File (path) is not valid %s', file);
                 totalFilesToSave--;
                 totalErrors++;
                 failedFiles.push(file);
-            } else {
-                // no issues writing sync file so write out record to file
-
-                fs.outputFile(file, data, function (err) {
-                    totalFilesToSave--;
-                    if (err) {
-                        logit.error('Failed to write out file %s', file);
-                        totalErrors++;
-                        failedFiles.push(file);
-                    } else {
-                        logit.info('Saved file %s', file);
-                        totalSaves++;
-                    }
-
-                    // done writing out files.
-                    if (totalFilesToSave <= 0) {
-                        doneSaving();
-                    }
-                });
+                return;
             }
-        });
+
+            updateFileMeta(file, record);
+
+            fileRecords[file].saveHash(data, function (saved) {
+                if (!saved) {
+                    logit.error('Failed to write out sync data file for %s', file);
+                    totalFilesToSave--;
+                    totalErrors++;
+                    failedFiles.push(file);
+                } else {
+                    // no issues writing sync file so write out record to file
+                    outputFile(file, data);
+                }
+            });
+        }
     }
 
     function doneSaving() {
