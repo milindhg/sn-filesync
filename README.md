@@ -413,30 +413,17 @@ Search unlocks a great deal of potential. Here are some ideas showing how you ca
 
 Considering ServiceNow does not handle merge conflicts at all, this is a major goal of this tool! Contributions to help achieve this road map or improve the tool in general are **greatly** appreciated.
 
-- [x] support latest versions (Eurkea+) of ServiceNow
-- [x] add protocol support to use http:// for on-premise setups
-- [x] check if the record has been updated on the server before uploading changes and warn the user and cancel the upload (basic conflict management)
-- [x] add notification (mac OS) to signify that the upload is complete (or failed)
-- [x] ignore hidden files better (Eg. ".DS_Store", ".jshintrc")
-- [x] upgrade node binaries to latest versions (currently version "v0.8.25". version here http://nodejs.org/dist/v0.10.37/ needs testing with restify)
-- [x] upgrade 3rd party node_modules (except restify)
-- [x] upgrade restify or find alternative that works better (restler)
-- [x] use standard npm package.json setup to specify 3rd part node_modules
-- [x] allow records to be saved in sub-dirs (eg, grouped by table or date created or user created etc.)
+- [ ] instance comparison (eg. compare specific tables based on custom records)]
+- [ ] extend API to allow push and pull options that could be called from an external tool
+- [ ] allow configuring pre and post hooks (similar to a Grunt/Gulp/Git systems)
+- [ ] add pre-push hook for validation against best practice, JSHint and customisable rule sets
 - [ ] allow saving complete record as XML (via search tool)
 - [ ] when an update conflict has been detected write out the remote file and launch a diff app (command line "diff" or mac OS XCode "FileMerge" via "`opendiff <left> <right>`") for the user to help resolve the differences
 - [ ] allow upload override of server record if the user has made a merge of remote and local data
-
+- [ ] split out components into separate modules (eg, sn-search, sn-sync, sn-rest)
 
 Nice to haves
-- [x] auto create folder structure for user (```./node-darwin src/app --setup```)
-- [x] add record browser to automatically download chosen files (via ```--search``` option)
-- [x] option to re-download all files from instance (```./node-darwin src/app --resync```)
-- [x] auto download records created or updated by a given user ID (via ```--search``` option)
-- [x] notifications are clickable and load the record in the browser
-- [x] save meta data received in request for user info (eg, sys_updated_on, sys_updated_by, sys_mod_count, description) (currently viewable in the `.sync_data/` files)
-- [x] download records on startup provided by a list (See ```"preLoad"``` in app.config.json)
-- [x] add windows support for fancy/OS style notifications
+
 - [ ] config option to log details to log file (help others send log info)
 - [ ] offline support? (keep track of files that are queued to upload when the connection is available again and retry).. maybe not. This could be dangerous if records get updated without someone to test them. Potentially workable if the last queued file is less than 3 minutes ago to cater for flaky mobile/roaming connections.
 
