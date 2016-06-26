@@ -1,5 +1,8 @@
 # FileSync Changes
 
+* 2016-06-26 (**Version 4.1.2**)
+ * Add support for proxies (fixes #19)
+
 * 2016-04-03 (**Version 4.1.1**)
  * Fix search issue: Records with multiple mapped scripts/css/xml fields do not download to multiple files when using search (fixes #25)
 

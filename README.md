@@ -1,4 +1,4 @@
-sn-filesync -- ServiceNow FileSync (v4.1.1)
+sn-filesync -- ServiceNow FileSync (v4.1.2)
 =================
 
 [![NPM](https://nodei.co/npm/sn-filesync.png)](https://nodei.co/npm/sn-filesync/)
@@ -265,6 +265,7 @@ createAllFolders | Bool: true / false | false | Creates all folders specified by
 preLoad | Bool: true / false | false | Creates local files that can be specified per root setting "`preLoadList`" (defined below). Set to false to ignore the property. Note that files that already exist are ignored but there is however a slight performance cost if you leave this option set to true. <br />**TIP**: set to false once files have been created.
 ignoreList | Array of matches | `/[\/\\]\./` | Define what files are **not** tracked for changes. Defaults to ignore hidden files on any directory level (eg `.sync_data`). Usage details can be found on the [chokidar readme](https://github.com/paulmillr/chokidar#path-filtering).
 ensureUniqueNames | Bool: true / false | false | If set to true then files will be post-fixed with the record sys_id to ensure all saved files have unique names. This supports records that have the same name on the same table. By default this is false to encourage more useful record names on the instance.
+proxy | Object | not set | Required if stuck behind a proxy. <br />Eg. `"proxy": { `<br />`"host": "host.com",`<br />`"port": "3860"`<br />` }`
 
 
 #### Root specific options
