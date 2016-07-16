@@ -1,5 +1,8 @@
 # FileSync Changes
 
+* 2016-07-16 (**Version 4.1.3**)
+ * Fix issue where multiple suffixes might get confused depending on order in folder config (fixes #30)
+
 * 2016-06-26 (**Version 4.1.2**)
  * Add support for proxies (fixes #19)
 
