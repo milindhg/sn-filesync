@@ -62,6 +62,9 @@ var filesInQueueToDownload = 0,
 // a list of FileRecord objects indexed by file path for easy access
 var fileRecords = {};
 
+// set to true to exit after a download is complete (avoids watcher starting)
+var endApp = false;
+
 // ---------------------------------------------------
 
 // entry point
@@ -141,7 +144,19 @@ function init() {
             addConfigFiles();
         }
 
-        // experimental search option (needs testing and cleanup)
+        // allow direct pushing of a specific file/field to the instance (provided it's already synced)
+        if (argv.push) {
+            pushUpRecord(argv);
+            return;
+        }
+
+        // allow direct downloading of a file/field
+        if (argv.pull) {
+            pullDownRecord(argv);
+            return;
+        }
+
+        // allow searching for records
         if (argv.search) {
             startSearch(argv);
             return;
@@ -169,6 +184,33 @@ function init() {
     }
 
     upgradeNeeded(config, start);
+}
+
+function getFolderConfig(folderName) {
+    for (var f in config.folders) {
+        var folder = config.folders[f];
+        if (f == folderName) {
+            return folder;
+        }
+    }
+    return false;
+}
+
+function extractSysIdFromName(str) {
+    var regEx = new RegExp("[a-z0-9]{32,}", "gi"),
+        matches;
+    if (typeof str != 'string') {
+        return false;
+    }
+
+    matches = str.match(regEx);
+
+    if (matches && matches.length > 0) {
+        // assumes only one sys_id str
+        return matches[0];
+    }
+
+    return false;
 }
 
 
@@ -202,18 +244,137 @@ function normaliseRecordName(pathPart) {
     return newName;
 }
 
-/**
- * Adds some text to the end of the filename
- * @param postFix {string} - text to add
- * @param path {string} - current file path or file name
- * @return {string} - updated path
- */
-function updateFileName(postFix, path) {
-    var extension = path.split('.').pop(),
-        regEx = new RegExp('\.' + extension),
-        updated = path.replace(regEx, postFix + '.' + extension);
+function pushUpRecord(argv) {
+    /*
+     * Supported test cases:
+     *
+     * --push "ui_pages/attachment.xhtml"
+     *
+     */
 
-    return updated;
+    var sys_id = extractSysIdFromName(argv.pull);
+    sys_id = false; // TODO: not yet supported
+    if (sys_id) {
+        // TODO: find the file that uses this sys_id (by using the .sync_data files)
+    } else {
+
+        // do we have a valid file path?
+        argv.push = FileRecordUtil.normalisePath(argv.push);
+        if (argv.push.indexOf(SLASH) > 0) {
+            var parts = argv.push.split(SLASH),
+                folder = parts[0],
+                file = parts[parts.length - 1],
+                filePath = getFirstRoot() + SLASH + argv.push;
+
+            logit.info('Will process file "%s" in folder "%s" with push path: %s', file, folder, filePath);
+
+            var f = trackFile(filePath);
+            if (!f) {
+                logit.error('Path not valid: %s', filePath);
+            } else {
+                send(filePath, function (complete) {
+                    if (!complete) {
+                        logit.error(('Could not push file (not found): ' + filePath).red);
+                    }
+                });
+            }
+        }
+    }
+}
+
+/**
+ * Uses the search tool to pull down records based on options provided
+ * @param argv {object} - options for finding record
+ */
+function pullDownRecord(argv) {
+    /*
+     * Supported test cases:
+     *
+     * --pull "ui_pages/attachment.xhtml"
+     * --pull "ui_pages/attachment"
+     *
+     * --table rm_story --pull "Block invalid group data from being used_a4e79eab3746d200b67a13b853990e87.txt"
+     *
+     * --table rm_story --pull "a4e79eab3746d200b67a13b853990e87"
+     * --table sys_script_include --pull "56c8741f0a0a0b34003ec298a82ea737"
+     * --table sys_ui_page --pull "b1b390890a0a0b1e00f6ae8a31ee2697"
+     *
+     * --table rm_story --pull --search_query "short_description=Block invalid group data from being used"
+     * --table sys_script_include --pull --search_query "name=ActionUtils"
+     * --table sys_ui_page --pull --search_query "name=attachment"
+     */
+
+    // pull = via seach query if set
+    var query = argv.search_query || '';
+    var sys_id = extractSysIdFromName(argv.pull);
+    var restrictFields = [];
+    var parts, folder, file, pullPath, folderObj = false;
+    // was a path value provided to --pull ?
+    var isPath = argv.pull !== true;
+
+    if (isPath) {
+        argv.pull = FileRecordUtil.normalisePath(argv.pull);
+        // make sure there is a real path provided
+        isPath = argv.pull.indexOf(SLASH) > 0;
+    }
+
+    if (isPath) {
+        parts = argv.pull.split(SLASH);
+        folder = parts[0];
+        file = parts[parts.length - 1];
+        pullPath = getFirstRoot() + SLASH + argv.pull;
+        folderObj = getFolderConfig(folder);
+    }
+
+    if (sys_id) {
+        // pull = record from sys_id
+        query = 'sys_id=' + sys_id;
+        if (folderObj) {
+            argv.table = folderObj.table;
+        }
+    } else if (isPath) {
+        // pull = path to file (first path component must be folder, last is record identifier with optional suffix)
+
+        if (!folderObj) {
+            logit.error('Could not find the mapping for this file: %s', argv.pull);
+            process.exit(0);
+            return;
+        }
+
+        argv.table = folderObj.table;
+
+        logit.info('Processing file "%s" in folder "%s" on table "%s".', file, folder, argv.table);
+
+        var f = trackFile(pullPath);
+        if (f) {
+            // use map to get specific field
+            var map = f.getSyncMap();
+            query = folderObj.key + '=' + map.fileName;
+            restrictFields.push(map.field);
+        } else {
+            // try searching for the file to download
+            query = folderObj.key + '=' + file;
+        }
+
+    }
+
+    if (query === '') {
+        // a pull without a query makes no sense.
+        logit.error('No valid pull query specified.');
+        process.exit(0);
+        return;
+    }
+
+    startSearch({
+        search_query: query,
+        search_table: argv.table || '',
+        download: true,
+        records_per_search: 1,
+        full_record: argv.full_record || false,
+        record_only: argv.record_only || false,
+        pull: argv.pull,
+        fields: restrictFields.length > 0 ? restrictFields : false
+    });
 }
 
 function startSearch(argv) {
@@ -224,11 +385,15 @@ function startSearch(argv) {
         download: argv.download || false,
         rows: argv.records_per_search || false,
         fullRecord: argv.full_record || false,
-        recordOnly: argv.record_only || false
+        recordOnly: argv.record_only || false,
+        restrictFields: argv.fields || false
     };
 
+    // is the search already defined in the config file?
+    var definedSearch = argv.search && argv.search.length > 0 && config.search[argv.search];
+
     // support search via config file
-    if (argv.search.length > 0 && config.search[argv.search]) {
+    if (definedSearch) {
         var searchObj = config.search[argv.search];
         // what is specified in config file overrides cmd line options
         // this encourages re-usable config and reduces human error with the cmd line
@@ -236,10 +401,17 @@ function startSearch(argv) {
         queryObj.table = searchObj.table || queryObj.table;
         queryObj.download = searchObj.download || queryObj.download;
         queryObj.rows = searchObj.records_per_search || queryObj.rows;
-        queryObj.fullRecord = searchObj.fullRecord || queryObj.fullRecord;
+        queryObj.fullRecord = searchObj.full_record || queryObj.fullRecord;
         queryObj.recordOnly = searchObj.record_only || queryObj.recordOnly;
+
+        if (queryObj.recordOnly) {
+            // implied logic
+            queryObj.fullRecord = true;
+        }
+    } else if (argv.pull || argv.push) {
+        // these are specifc pull and push requests
     } else {
-        logit.info('Note: running in demo mode as no defined search in your config file was found/specified.'.yellow);
+        logit.info('Note: demo mode active as no defined search in your config file was found/specified.'.yellow);
         queryObj.demo = true;
     }
 
@@ -257,6 +429,10 @@ function startSearch(argv) {
 
 /**
  * Callback from after the Search.getResults() call is complete
+ *
+ * @param searchObj {object} - the search module itself
+ * @param queryObj {object} - the input provided to search on
+ * @param records {object} - list of fields and complete records to process
  */
 function processFoundRecords(searchObj, queryObj, records) {
     var firstRoot = getFirstRoot(),
@@ -264,8 +440,7 @@ function processFoundRecords(searchObj, queryObj, records) {
         totalFilesToSave = 0,
         totalErrors = 0,
         totalSaves = 0,
-        failedFiles = [],
-        fullRecordSuffix = '_record.json';
+        failedFiles = [];
 
     // process found records
     for (var i in records) {
@@ -273,24 +448,26 @@ function processFoundRecords(searchObj, queryObj, records) {
             validData,
             fileSystemSafeName = normaliseRecordName(record.recordName),
             filePath = basePath + SLASH + record.folder + SLASH,
-            sys_id = record.recordData.sys_id || record.sys_id;
+            sys_id = record.recordData.sys_id || record.sys_id,
+            suffix = record.fieldSuffix;
 
-        var fileName = fileSystemSafeName + '.' + record.fieldSuffix;
 
-        if (record.fullRecord) {
-            fileName = fileSystemSafeName + fullRecordSuffix;
+        if (config.ensureUniqueNames) {
+            suffix = sys_id + '.' + suffix;
         }
 
+        var fileName = fileSystemSafeName + '.' + suffix;
 
         if (record.subDir !== '') {
             filePath += record.subDir + SLASH;
         }
         filePath += fileName;
 
-
-        // allow records with the same name to be saved properly
-        if (config.ensureUniqueNames) {
-            filePath = updateFileName('_' + sys_id, filePath);
+        // ensure we have a valid file name
+        if (fileSystemSafeName.length === 0) {
+            totalErrors++;
+            failedFiles.push(filePath);
+            continue;
         }
 
         // seems like protected records that are read-only hide certain fields from view
@@ -384,7 +561,7 @@ function processFoundRecords(searchObj, queryObj, records) {
 
     function doneSaving() {
         if (totalErrors > 0) {
-            logit.warn("Finished creating %d files with errors. %s file(s) failed to save or had 0 bytes as content: \n%s",
+            logit.warn("Finished creating %d files with errors. %s file(s) failed to save, had 0 bytes as content or would be invisible (eg. \".some-file.js\"): \n%s",
                 totalSaves, totalErrors, failedFiles.join("\n"));
         } else {
             logit.info('Finished creating %d files.', totalSaves);
@@ -625,6 +802,12 @@ function decrementQueue() {
                 notifyUser(msgCodes.ALL_DOWNLOADS_COMPLETE);
             }
         }
+
+        if (endApp) {
+            process.exit(1);
+            return;
+        }
+
         // restart watch
         if (!chokiWatcher) {
             // do not start watching folders straight away as there may be IO streams
@@ -1139,7 +1322,6 @@ function setupFolders(config, callback) {
 
     // for each root create our dirs
     for (var r in config.roots) {
-        //logit.info('found r: '+r);
         for (var f in config.folders) {
             var newDir = path.join(r, f);
             fs.ensureDir(newDir, dirError);
