@@ -448,9 +448,14 @@ function processFoundRecords(searchObj, queryObj, records) {
             validData,
             fileSystemSafeName = normaliseRecordName(record.recordName),
             filePath = basePath + SLASH + record.folder + SLASH,
-            sys_id = record.recordData.sys_id || record.sys_id,
             suffix = record.fieldSuffix;
 
+            // 'sys_id = record.recordData.sys_id || record.sys_id' crashed in some cases
+            if (record.recordData == undefined) {
+                sys_id = record.sys_id;
+            } else {
+                sys_id = record.recordData.sys_id || record.sys_id;
+            }
 
         if (config.ensureUniqueNames) {
             suffix = sys_id + '.' + suffix;
