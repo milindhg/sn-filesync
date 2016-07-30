@@ -446,16 +446,22 @@ function processFoundRecords(searchObj, queryObj, records) {
     for (var i in records) {
         var record = records[i],
             validData,
+            validResponse = typeof record.recordData != 'undefined',
             fileSystemSafeName = normaliseRecordName(record.recordName),
             filePath = basePath + SLASH + record.folder + SLASH,
-            suffix = record.fieldSuffix;
+            suffix = record.fieldSuffix,
+            sys_id = '';
 
-            // 'sys_id = record.recordData.sys_id || record.sys_id' crashed in some cases
-            if (record.recordData == undefined) {
-                sys_id = record.sys_id;
-            } else {
-                sys_id = record.recordData.sys_id || record.sys_id;
-            }
+        if (validResponse) {
+            sys_id = record.recordData.sys_id || record.sys_id;
+        } else {
+            var bestGuessName = filePath + ' .... ' + fileSystemSafeName;
+            // seems like protected records that are read-only hide certain fields from view
+            logit.warn('Found but will ignore to protected record: ' + bestGuessName);
+            totalErrors++;
+            failedFiles.push(bestGuessName);
+            continue;
+        }
 
         if (config.ensureUniqueNames) {
             suffix = sys_id + '.' + suffix;
@@ -470,14 +476,6 @@ function processFoundRecords(searchObj, queryObj, records) {
 
         // ensure we have a valid file name
         if (fileSystemSafeName.length === 0) {
-            totalErrors++;
-            failedFiles.push(filePath);
-            continue;
-        }
-
-        // seems like protected records that are read-only hide certain fields from view
-        if (typeof records[i].recordData == 'undefined') {
-            logit.warn('Found but will ignore to protected record: ' + filePath);
             totalErrors++;
             failedFiles.push(filePath);
             continue;

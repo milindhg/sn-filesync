@@ -1,5 +1,8 @@
 # FileSync Changes
 
+* 2016-07-30 (**Version 4.2.1**)
+ * Refactor community fix to reduce duplicate checks. Ensures only valid responses and records are processed in search.
+
 * 2016-07-17 (**Version 4.2.0**)
  * Massive README updates
  * Add pull and push command line option support to allow integration with third party build tools (see README for more details)
