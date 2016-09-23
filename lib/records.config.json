@@ -16,6 +16,20 @@
             },
             "subDirPattern": "table/type"
         },
+        "email_scripts": {
+            "table": "sys_script_email",
+            "key": "name",
+            "fields": {
+                "js": "script"
+            }
+        },
+        "inbound_actions": {
+            "table": "sysevent_in_email_action",
+            "key": "name",
+            "fields": {
+                "js": "script"
+            }
+        },
         "processors": {
             "table": "sys_processor",
             "key": "name",

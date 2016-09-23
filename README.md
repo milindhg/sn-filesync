@@ -1,4 +1,4 @@
-sn-filesync -- ServiceNow FileSync (v4.1.2)
+sn-filesync -- ServiceNow FileSync (v4.2.1)
 =================
 
 [![NPM](https://nodei.co/npm/sn-filesync.png)](https://nodei.co/npm/sn-filesync/)
@@ -25,6 +25,7 @@ sn-filesync -- ServiceNow FileSync (v4.1.2)
    * [Search Usage](#search-usage)
    * [Search Command Line Usage](#search-command-line-usage)
    * [Tips for Searching](#tips-for-searching)
+ * [Pull and Push Commands] (#pull-and-push-commands)
  * [Road Map](#road-map)
  * [Contribution workflow](#contribution-workflow)
  * [Changes](#changes)
@@ -84,45 +85,54 @@ FileSync is primarily driven via the command line. Windows users can of course c
 
 The following demos assume a config file in `~/project/test/config.json` and records in `~/project/test/records/`
 
-**Start**
+ * Start
 
-`node bin/apps.js --config ~/project/test/config.json`
+  `node bin/apps.js --config ~/project/test/config.json`
 
-**Download the script field from a script include**
+ * Download the script field from a script include
 
-`touch ~/project/test/records/script_includes/JSUtil.js`
+ `touch ~/project/test/records/script_includes/JSUtil.js`
 
-**Get help on options**
+ * Get help on options
 
-`node bin/app.js --help`
+ `node bin/app.js --help`
 
-**Use search to find records to sync**
+ * Use search to **find** records to sync
 
-`node bin/apps.js --config ~/project/test/config.json --search mine`
+ `node bin/apps.js --config ~/project/test/config.json --search mine`
 
-**Use search to download found records**
+ * Use search to **download** found records
 
-`node bin/apps.js --config ~/project/test/config.json --search mine --download`
+ `node bin/apps.js --config ~/project/test/config.json --search mine --download`
+
+ * Use search to download records including the complete record as JSON (useful to reference)
+
+ `node bin/app.js --config ~/project/test/config.json --search mine --download --full_record`
+
+ * Update all local files with the latest version from the instance
+
+ `node bin/app.js --config ~/project/test/config.json --resync`
 
 See also [Search Command Line Usage](#search-command-line-usage) for more details.
 
 
 
-As you make changes to mapped files, you'll see messages logged showing the sync processing.
+As you make changes to mapped files, you'll see messages and notifications on the sync status.
 
 If you are using the default config then you will already have all the appropriate folders created for you and some test script include files that will have been downloaded from the instance. See "preLoad" and "createAllFolders" options below.
 
-Additionally, you can sync more files by adding an empty file corresponding to an instance record.  You can do this from your editor
+#### How to get fields to files and then update the instance record
+
+You can sync more files by adding an empty file corresponding to an instance record. You can do this from your editor
 or IDE, or via the command line.
 
-Adding the empty JSUtil.js file will cause FileSync to sync the (OOB) JSUtil script include to the file. Any changes to
-this local file will now be synced to the mapped instance.
+Adding an empty JSUtil.js file in the script_includes folder will cause FileSync to sync the (OOB) JSUtil script include to the file. Any changes to this local file will now be synced to the mapped instance.
 
-The basic workflow is to initially create a script on ServiceNow (script include, business rule, ui script, etc.), then
-add an empty file of the same name (and mapped extension) to a mapped local folder.
+The basic workflow is to initially create a record/script on ServiceNow (script include, business rule, ui script, etc.), then
+add an empty file of the same name (and mapped extension) to a mapped local folder (defined in config and displayed at startup).
 
 FileSync can not support creating new records in ServiceNow by simply adding local files since there are
-additional fields and rules that can not be evaluated locally. Always start by creating a new
+additional fields and rules that cannot be evaluated locally. Always start by creating a new
 record on the instance, then add the empty local file and start editing your script.
 
 ### app.config.json settings
@@ -259,6 +269,7 @@ NOT supported:
 Property | Values | Default | Purpose
 ------------ | -------------------- | ------------- | -------------
 debug | Bool: true / false | false | Enable more verbose debugging. Useful to troubleshoot connection issues.
+search | Object | empty | Define search criteria for searching. See [Search Command Line Usage](#search-command-line-usage) for more details.
 ignoreDefaultFolders | Bool: true / false | false | If false then utilise record to folder mapping defined in **lib/records.config.json**.<br />If true then the **"folders"** property must be set as described below.
 folders | Object listing folders | not set (inherited) | See **lib/records.config.json** as an example for format and usage. If this property is defined then it will override that defined in **lib/records.config.json** on a per folder level. This is an easy way to specify more mappings without modifying core files. If "ignoreDefaultFolders " is set to true then **lib/records.config.json** is completely ignored and all mappings must be defined in the "folders" property.
 createAllFolders | Bool: true / false | false | Creates all folders specified by folders (if set) or the default **lib/records.config.json** file.
@@ -286,12 +297,12 @@ This is also useful if you want to create a backup of your current setup.
 Command Line Usage:
 
 ````
-./node-darwin src/app --config <config to use> --export <new config file>
+node bin/app.js --config <config to use> --export <new config file>
 ````
 
 Eg.
 ````
-./node-darwin src/app --config ~/.filesync/app.config-acme.json --export ~/Desktop/acme.config.json
+node bin/app.js --config ~/.filesync/app.config-acme.json --export ~/Desktop/acme.config.json
 ````
 
 The resulting json file will **not** include your authentication information. It will include the folder setup you used and a preLoadList listing all the records you have previously downloaded. This is very handy for getting new team members setup and providing them an easy reference to important files. Eg, for CMS development this could mean theme CSS/SASS, UI Macros, UI Pages and various script includes.
@@ -374,7 +385,17 @@ The search component enforces using the config file instead of the command line 
             "query": "sys_created_on>javascript:gs.dateGenerate('2015-03-25','23:59:59')",
             "records_per_search": "1",
             "download": true // download all founds results
-        }
+        },
+        "stories": {
+            "table": "rm_story",
+            "query": "active=true",
+            "full_record": true // also include a JSON file representing the full record
+        },
+        "stories": {
+            "table": "rm_story",
+            "query": "active=true",
+            "record_only": true // only the JSON file, no fields synced
+        },
     },
 
 ```
@@ -383,16 +404,24 @@ The search component enforces using the config file instead of the command line 
 
  * Test the search system in demo mode:
  ```
- ./node-darwin src/app --config ~/my-conf.json --search
+ node bin/app.js --config ~/my-conf.json --search
  ```
  * Search based on a pre-defined search config (defined in *my-conf.json*):
  ```
- ./node-darwin src/app --config ~/my-conf.json --search mine
+ node bin/app.js --config ~/my-conf.json --search mine
  ```
  * Download records found via search (overwrites existing local files if they exist):
-```
-./node-darwin src/app --config ~/my-conf.json --search mine --download
-```
+ ```
+ node bin/app.js --config ~/my-conf.json --search mine --download
+ ```
+ * Additionally download the full record as JSON:
+ ```
+ node bin/app.js --config ~/my-conf.json --search mine --download --full_record
+ ```
+  * Download only the full record as JSON:
+ ```
+ node bin/app.js --config ~/my-conf.json --search mine --download --full_record --record_only
+ ```
 
 Note that the defaults are to search in demo mode without downloading any records.
 
@@ -408,35 +437,72 @@ Search unlocks a great deal of potential. Here are some ideas showing how you ca
 * Export all description content or story content or ANY attribute from any table in bulk. Could identify documentation issues.
  * Export entire records but only the fields of interest. Eg, description field, script field, last modification date etc.
 
+## Pull and Push Commands
+
+The command line options `--pull` and `--push` allow integration with third party tools and scripts. Pull will retrieve a record given a **sys_id**, **search query** or **file path** which includes the table name and the file to save to. Depending on the input, either all defined fields in the config file will be output to files or just the field specified based on the file name suffix. Push will update the instance record field if the items are in sync.
+
+Note that the default functionality for a pull is to download the file unlike when using `--search` which requires the `--download` option. Existing files will be overwritten.
+
+### Pull Examples:
+
+ * Pull record via sys_id:
+```
+node bin/app.js --config ~/my-conf.json --pull "b1b390890a0a0b1e00f6ae8a31ee2697" --table sys_ui_page
+```
+ * Pull record via sys_id (slightly slower search via all tables):
+```
+node bin/app.js --config ~/my-conf.json --pull "b1b390890a0a0b1e00f6ae8a31ee2697"
+```
+ * Pull all defined fields for a record from a file path:
+ ```
+node bin/app.js --config ~/my-conf.json --pull "ui_pages/attachment"
+ ```
+ * Pull a specific field for a record from a file path:
+ ```
+node bin/app.js --config ~/my-conf.json --pull "ui_pages/attachment.xhtml"
+ ```
+
+ * Pull record via search query:
+ ```
+node bin/app.js --config ~/my-conf.json --pull --search_query "name=attachment" --table sys_ui_page
+ ```
+
+ * Pull record via search query and save full record as JSON:
+ ```
+node bin/app.js --config ~/my-conf.json --pull --search_query "name=attachment" --table sys_ui_page --full_record
+ ```
+
+
+### Push Examples:
+
+Push always ensures that records are in sync to avoid conflicts.
+
+ * Push a field value to the instance
+ ```
+ node bin/app.js --config ~/my-conf.json --push "ui_pages/attachment.xhtml"
+ ```
+
+* Push a field value to the instance (nested paths are supported!)
+ ```
+ node bin/app.js --config ~/my-conf.json --push "business_rules/incident/before/insert_incident.js"
+ ```
 
 ## Road Map
 
 Considering ServiceNow does not handle merge conflicts at all, this is a major goal of this tool! Contributions to help achieve this road map or improve the tool in general are **greatly** appreciated.
 
-- [x] support latest versions (Eurkea+) of ServiceNow
-- [x] add protocol support to use http:// for on-premise setups
-- [x] check if the record has been updated on the server before uploading changes and warn the user and cancel the upload (basic conflict management)
-- [x] add notification (mac OS) to signify that the upload is complete (or failed)
-- [x] ignore hidden files better (Eg. ".DS_Store", ".jshintrc")
-- [x] upgrade node binaries to latest versions (currently version "v0.8.25". version here http://nodejs.org/dist/v0.10.37/ needs testing with restify)
-- [x] upgrade 3rd party node_modules (except restify)
-- [x] upgrade restify or find alternative that works better (restler)
-- [x] use standard npm package.json setup to specify 3rd part node_modules
-- [x] allow records to be saved in sub-dirs (eg, grouped by table or date created or user created etc.)
-- [ ] allow saving complete record as XML (via search tool)
+- [ ] instance comparison (eg. compare specific tables based on custom records)]
+- [x] extend API to allow push and pull options that could be called from an external tool
+- [ ] Allow FileSync to be used in task build processes (extend API and 'pluggable' functionality)
+- [ ] allow configuring pre and post hooks (similar to a Grunt/Gulp/Git systems)
+- [ ] add pre-push hook for validation against best practice, JSHint and customisable rule sets
+- [x] allow saving complete record as XML (via search tool)
 - [ ] when an update conflict has been detected write out the remote file and launch a diff app (command line "diff" or mac OS XCode "FileMerge" via "`opendiff <left> <right>`") for the user to help resolve the differences
 - [ ] allow upload override of server record if the user has made a merge of remote and local data
-
+- [ ] split out components into separate modules (eg, sn-search, sn-sync, sn-rest)
 
 Nice to haves
-- [x] auto create folder structure for user (```./node-darwin src/app --setup```)
-- [x] add record browser to automatically download chosen files (via ```--search``` option)
-- [x] option to re-download all files from instance (```./node-darwin src/app --resync```)
-- [x] auto download records created or updated by a given user ID (via ```--search``` option)
-- [x] notifications are clickable and load the record in the browser
-- [x] save meta data received in request for user info (eg, sys_updated_on, sys_updated_by, sys_mod_count, description) (currently viewable in the `.sync_data/` files)
-- [x] download records on startup provided by a list (See ```"preLoad"``` in app.config.json)
-- [x] add windows support for fancy/OS style notifications
+
 - [ ] config option to log details to log file (help others send log info)
 - [ ] offline support? (keep track of files that are queued to upload when the connection is available again and retry).. maybe not. This could be dangerous if records get updated without someone to test them. Potentially workable if the last queued file is less than 3 minutes ago to cater for flaky mobile/roaming connections.
 

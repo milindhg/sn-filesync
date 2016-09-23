@@ -34,6 +34,13 @@
             "query": "active=true^sys_created_on>javascript:gs.dateGenerate('2015-03-25','23:59:59')",
             "records_per_search": "1",
             "download": true
+        },
+        "script-includes-plus": {
+            "table": "sys_script_include",
+            "query": "active=true^sys_created_on>javascript:gs.dateGenerate('2015-03-25','23:59:59')",
+            "records_per_search": "1",
+            "download": true,
+            "full_record": true
         }
     },
 

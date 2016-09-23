@@ -1,5 +1,21 @@
 # FileSync Changes
 
+* 2016-07-30 (**Version 4.2.1**)
+ * Refactor community fix to reduce duplicate checks. Ensures only valid responses and records are processed in search.
+
+* 2016-07-17 (**Version 4.2.0**)
+ * Massive README updates
+ * Add pull and push command line option support to allow integration with third party build tools (see README for more details)
+   * Eg. `node bin/app.js --config config.json --pull "ui_pages/attachment.xhtml"`
+   * Eg. `node bin/app.js --config config.json --push "ui_pages/attachment.xhtml"`
+ * Allow subDirPattern to use display values instead of sys_ids
+ * Add search support to download the whole record (for reference only) and optionally ignore individual field files
+   * Eg. `node bin/app.js --config config.json --search stories --record_only`
+   * Eg. `node bin/app.js --config config.json --search team --full_record`
+
+* 2016-07-16 (**Version 4.1.3**)
+ * Fix issue where multiple suffixes might get confused depending on order in folder config (fixes #30)
+
 * 2016-06-26 (**Version 4.1.2**)
  * Add support for proxies (fixes #19)
 
