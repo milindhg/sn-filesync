@@ -525,6 +525,14 @@ by automatically forking the project and prompting to send a pull request too.
 [pr]: http://help.github.com/pull-requests/
 
 
+## Contributors are awesome
+* [dynamicdan](https://github.com/dynamicdan)
+* [ReedOwens](https://github.com/ReedOwens)
+* [Echo3ToEcho7](https://github.com/Echo3ToEcho7)
+* [dwightgunning](https://github.com/dwightgunning)
+* [karimhernandez](https://github.com/karimhernandez)
+* [stegel](https://github.com/stegel)
+* [jacebenson](https://github.com/jacebenson)
 ## Changes
 
 See [CHANGES.md](https://github.com/dynamicdan/filesync/blob/master/CHANGES.md)
