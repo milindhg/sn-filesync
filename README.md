@@ -28,6 +28,7 @@ sn-filesync -- ServiceNow FileSync (v4.2.1)
  * [Pull and Push Commands] (#pull-and-push-commands)
  * [Road Map](#road-map)
  * [Contribution workflow](#contribution-workflow)
+ * [Contributors are awesome](#contributors-are-awesome)
  * [Changes](#changes)
  * [Architecture](#architecture)
  * [Windows support](#windows-support)
@@ -533,6 +534,7 @@ by automatically forking the project and prompting to send a pull request too.
 * [karimhernandez](https://github.com/karimhernandez)
 * [stegel](https://github.com/stegel)
 * [jacebenson](https://github.com/jacebenson)
+
 ## Changes
 
 See [CHANGES.md](https://github.com/dynamicdan/filesync/blob/master/CHANGES.md)
