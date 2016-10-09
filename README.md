@@ -28,6 +28,7 @@ sn-filesync -- ServiceNow FileSync (v4.2.1)
  * [Pull and Push Commands] (#pull-and-push-commands)
  * [Road Map](#road-map)
  * [Contribution workflow](#contribution-workflow)
+ * [Contributors are awesome](#contributors-are-awesome)
  * [Changes](#changes)
  * [Architecture](#architecture)
  * [Windows support](#windows-support)
@@ -524,6 +525,15 @@ by automatically forking the project and prompting to send a pull request too.
 [branch]: https://help.github.com/articles/creating-and-deleting-branches-within-your-repository
 [pr]: http://help.github.com/pull-requests/
 
+
+## Contributors are awesome
+* [dynamicdan](https://github.com/dynamicdan)
+* [ReedOwens](https://github.com/ReedOwens)
+* [Echo3ToEcho7](https://github.com/Echo3ToEcho7)
+* [dwightgunning](https://github.com/dwightgunning)
+* [karimhernandez](https://github.com/karimhernandez)
+* [stegel](https://github.com/stegel)
+* [jacebenson](https://github.com/jacebenson)
 
 ## Changes
 
