@@ -237,10 +237,11 @@ function updateFileMeta(file, record) {
  */
 function normaliseRecordName(pathPart) {
     var newName = pathPart;
-    newName = newName.replace(/\//g, '_');
-    newName = newName.replace(/\*/g, '_');
-    newName = newName.replace(/\\/g, '_');
-
+	if (!((newName == null) || (typeof newName == 'undefined') || ('' == '' + newName))){
+		newName = newName.replace(/\//g, '_');
+		newName = newName.replace(/\*/g, '_');
+		newName = newName.replace(/\\/g, '_');
+	}
     return newName;
 }
 
@@ -446,7 +447,7 @@ function processFoundRecords(searchObj, queryObj, records) {
     for (var i in records) {
         var record = records[i],
             validData,
-            validResponse = typeof record.recordData != 'undefined',
+            validResponse = ((typeof record.recordData != 'undefined') && !((record.recordName == null) || (typeof record.recordName == 'undefined') || ('' == '' + record.recordName))),
             fileSystemSafeName = normaliseRecordName(record.recordName),
             filePath = basePath + SLASH + record.folder + SLASH,
             suffix = record.fieldSuffix,
